@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"strings"
 	"time"
 
 	"golang.org/x/net/context"
@@ -29,8 +30,8 @@ func etcdConnect() error {
 		return err
 	}
 	etcdClient = etcd.NewKeysAPI(cli)
-	_, err = etcdClient.Get(context.Background(), "/", nil)
-	if err != nil && err == etcd.ErrClusterUnavailable {
+	_, err = etcdClient.Get(context.Background(), "/foo", nil)
+	if err != nil && err.Error() == etcd.ErrClusterUnavailable.Error() {
 		return err
 	}
 	return nil
@@ -79,4 +80,12 @@ func etcdDelete(file string) error {
 		return errors.New("File still exsits, not deleting " + file + " : " + err.Error())
 	}
 	return nil
+}
+
+func etcdExists(file string) bool {
+	_, err := etcdClient.Get(context.Background(), file, nil)
+	if err != nil && strings.Contains(err.Error(), "Key not found") {
+		return false
+	}
+	return true
 }

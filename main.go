@@ -31,14 +31,14 @@ func main() {
 	flag.Parse()
 	setConfig(*flagConfigPath)
 
-	// Git repository opening/cloning
-	if err := openOrCloneRepo(); err != nil {
-		log.WithError(err).Fatal("Couldn't find repo or clone it")
-	}
-
 	// etcd Client connection
 	if err := etcdConnect(); err != nil {
 		log.WithError(err).Fatal("Couldn't connect to etcd")
+	}
+
+	// Git repository opening/cloning
+	if err := openOrCloneRepo(); err != nil {
+		log.WithError(err).Fatal("Couldn't find repo or clone it")
 	}
 
 	// HTTP serving

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/viper"
 	"gopkg.in/libgit2/git2go.v23"
@@ -26,11 +28,49 @@ func openOrCloneRepo() error {
 			return err
 		}
 	}
+	if err := syncRepo(); err != nil {
+		log.WithError(err).Warn("Couldn't sync repo")
+	}
 	return nil
 }
 
 func syncRepo() error {
+	err := gitRepo.CheckoutHead(nil)
+	if err != nil {
+		return errors.New("Couldn't checkout head: " + err.Error())
+	}
+	head, err := gitRepo.Head()
+	if err != nil {
+		return errors.New("Couldn't checkout head: " + err.Error())
+	}
+	commit, err := gitRepo.LookupCommit(head.Target())
+	if err != nil {
+		return errors.New("Couldn't lookup commit: " + err.Error())
+	}
+	tree, err := commit.Tree()
+	if err != nil {
+		return errors.New("Couldn't get commit tree: " + err.Error())
+	}
+	tree.Walk(walkCallback)
+	log.Info("Repo synced")
 	return nil
+}
+
+func walkCallback(name string, treeEntry *git.TreeEntry) int {
+	if treeEntry.Type == git.ObjectTree {
+		return 0
+	}
+	name += treeEntry.Name
+	if !etcdExists(name) {
+		if err := etcdCreate(name); err != nil {
+			log.WithError(err).Warn("Couldn't create key")
+		}
+	} else {
+		if err := etcdSet(name); err != nil {
+			log.WithError(err).Warn("Couldn't set key")
+		}
+	}
+	return 0
 }
 
 func credentialsCallback(url string, username string, allowedTypes git.CredType) (git.ErrorCode, *git.Cred) {
