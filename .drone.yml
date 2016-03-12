@@ -1,0 +1,14 @@
+build:
+  image: golang:$$GO_VERSION
+  commands:
+   - echo "@testing http://dl-4.alpinelinux.org/alpine/edge/testing" | tee -a /etc/apk/repositories
+   - apk --no-cache --quiet add libgit2-dev@testing curl git cvs gcc musl-dev
+   - go get
+   - go build
+   - go test
+
+matrix:
+  GO_VERSION:
+    - 1.6-alpine
+    - 1.5-alpine
+    - 1.4-alpine
