@@ -1,6 +1,6 @@
-git2go
+git2etcd
 ======
-[![GoDoc](https://godoc.org/github.com/blippar/git2etcd?status.svg)](http://godoc.org/github.com/blippar/git2etcd) [![Build Status](https://travis-ci.org/libgit2/git2go.svg?branch=master)](https://travis-ci.org/libgit2/git2go)
+[![GoDoc](https://godoc.org/github.com/blippar/git2etcd?status.svg)](http://godoc.org/github.com/blippar/git2etcd) [![Build Status](https://ci.userctl.xyz/api/badges/blippar/git2etcd/status.svg)](https://ci.userctl.xyz/blippar/git2etcd)
 
 
 Simple binary to sync a Git repository with an etcd config.
@@ -8,11 +8,28 @@ Simple binary to sync a Git repository with an etcd config.
 Installing
 ----------
 
+First, install libgit2, then :
+
 ```
 go get github.com/blippar/git2etcd
 ```
 
+Configuring
+-------
+
+Key | Description | Default
+----|-------------|--------
+`host.listen` | Host to listen to | `""`
+`host.port` | Port to listen to | `"4242"`
+`host.hook` | Name of the Webhook endpoint | `"hook"`
+`repo.url` | URL of the repo to sync | `"https://github.com/0rax/fishline.git"`
+`repo.path` | Path where to clone the repo | `"/opt/git2etcd/repo"`
+`etcd.hosts` | List of etcd hosts | `["http://127.0.0.1:2379"]`
+`auth.type`  | Type of authentication for Git | `"ssh"`
+`auth.ssh.key` | Path to the SSH private key (if ssh auth type) | `"~/.ssh/id_rsa"`
+`auth.ssh.public` | Path to the SSH public key (if ssh auth type) | `"~/.ssh/id_rsa.pub"`
+
 Authors
 -------
 
-- Clem Dal Palu (@dalpapa)
+- Clem Dal Palu ([@dal-papa](http://www.github.com/dal-papa))

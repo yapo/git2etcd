@@ -29,6 +29,10 @@ func openOrCloneRepo() error {
 	return nil
 }
 
+func syncRepo() error {
+	return nil
+}
+
 func credentialsCallback(url string, username string, allowedTypes git.CredType) (git.ErrorCode, *git.Cred) {
 	if viper.GetString("auth.type") == "ssh" {
 		ret, cred := git.NewCredSshKey("git", viper.GetString("auth.ssh.public"), viper.GetString("auth.ssh.key"), viper.GetString("auth.ssh.passphrase"))
