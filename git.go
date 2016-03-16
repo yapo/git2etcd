@@ -35,6 +35,33 @@ func openOrCloneRepo() error {
 }
 
 func syncRepo(repo *git.Repository) error {
+	remote, err := repo.Remotes.Lookup("origin")
+	if err != nil {
+		return errors.New("Couldn't lookup remote: " + err.Error())
+	}
+	if err := remote.Fetch([]string{}, &git.FetchOptions{
+		RemoteCallbacks: git.RemoteCallbacks{
+			CredentialsCallback:      credentialsCallback,
+			CertificateCheckCallback: certificateCheckCallback,
+		},
+	}, ""); err != nil {
+		return errors.New("Couldn't fetch remote: " + err.Error())
+	}
+	// Merge
+	remoteRef, err := repo.References.Lookup("refs/remotes/origin/" + viper.GetString("repo.branch"))
+	if err != nil {
+		return errors.New("Couldn't lookup ref: " + err.Error())
+	}
+	mergeRemoteHead, err := repo.AnnotatedCommitFromRef(remoteRef)
+	if err != nil {
+		return errors.New("Couldn't get commit ref: " + err.Error())
+	}
+
+	mergeHeads := make([]*git.AnnotatedCommit, 1)
+	mergeHeads[0] = mergeRemoteHead
+	if err = repo.Merge(mergeHeads, nil, nil); err != nil {
+		return errors.New("Couldn't merge: " + err.Error())
+	}
 	if err := repo.CheckoutHead(nil); err != nil {
 		return errors.New("Couldn't checkout head: " + err.Error())
 	}
