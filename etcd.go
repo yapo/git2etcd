@@ -46,7 +46,7 @@ func etcdCreate(file string) error {
 	if err != nil {
 		return errors.New("Couldn't read file " + file + " : " + err.Error())
 	}
-	_, err = etcdClient.Create(context.Background(), file, string(val))
+	_, err = etcdClient.Create(context.Background(), file, strings.TrimSpace(string(val)))
 	if err != nil {
 		return errors.New("Couldn't create file " + file + " : " + err.Error())
 	}
@@ -62,7 +62,7 @@ func etcdSet(file string) error {
 	if err != nil {
 		return errors.New("Couldn't read file " + file + " : " + err.Error())
 	}
-	_, err = etcdClient.Set(context.Background(), file, string(val), nil)
+	_, err = etcdClient.Set(context.Background(), file, strings.TrimSpace(string(val)), nil)
 	if err != nil {
 		return errors.New("Couldn't set file " + file + " : " + err.Error())
 	}
