@@ -24,6 +24,7 @@ Key | Description | Default
 `host.hook` | Name of the Webhook endpoint | `"hook"`
 `repo.url` | URL of the repo to sync | `"https://github.com/0rax/fishline.git"`
 `repo.path` | Path where to clone the repo | `"/opt/git2etcd/repo"`
+`repo.synccycle` | Number of seconds between 2 automatic syncs (if 0, never syncs) | `3600`
 `etcd.hosts` | List of etcd hosts | `["http://127.0.0.1:2379"]`
 `auth.type`  | Type of authentication for Git | `"ssh"`
 `auth.ssh.key` | Path to the SSH private key (if ssh auth type) | `"~/.ssh/id_rsa"`
@@ -32,7 +33,7 @@ Key | Description | Default
 `auth.http.password` | Password (if HTTP auth type) | `""`
 
 #### JSON file
-You can use a JSON config file that you would put either in current folder or in a folder you can precise with the `-config` flag. 
+You can use a JSON config file that you would put either in current folder or in a folder you can precise with the `-config` flag.
 
 ~~~json
 {
@@ -62,7 +63,7 @@ You can use a JSON config file that you would put either in current folder or in
 
 > I don't speak JSON !
 
-Well, you can use TOML, YAML, HCL ... 
+Well, you can use TOML, YAML, HCL ...
 #### Env vars
 
 Who needs a file when you can use environment variables ? `host.port` can be `G2E_HOST_POST` and so on.

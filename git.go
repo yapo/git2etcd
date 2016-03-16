@@ -28,22 +28,21 @@ func openOrCloneRepo() error {
 			return err
 		}
 	}
-	if err := syncRepo(); err != nil {
+	if err := syncRepo(gitRepo); err != nil {
 		log.WithError(err).Warn("Couldn't sync repo")
 	}
 	return nil
 }
 
-func syncRepo() error {
-	err := gitRepo.CheckoutHead(nil)
+func syncRepo(repo *git.Repository) error {
+	if err := repo.CheckoutHead(nil); err != nil {
+		return errors.New("Couldn't checkout head: " + err.Error())
+	}
+	head, err := repo.Head()
 	if err != nil {
 		return errors.New("Couldn't checkout head: " + err.Error())
 	}
-	head, err := gitRepo.Head()
-	if err != nil {
-		return errors.New("Couldn't checkout head: " + err.Error())
-	}
-	commit, err := gitRepo.LookupCommit(head.Target())
+	commit, err := repo.LookupCommit(head.Target())
 	if err != nil {
 		return errors.New("Couldn't lookup commit: " + err.Error())
 	}

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	etcd "github.com/coreos/etcd/client"
@@ -41,8 +42,25 @@ func main() {
 		log.WithError(err).Fatal("Couldn't find repo or clone it")
 	}
 
+	go func(repo *git.Repository) {
+		syncCycle := time.Duration(viper.GetInt("repo.synccycle")) * time.Second
+		if syncCycle > 0 {
+			for {
+				select {
+				case <-time.After(syncCycle):
+					if err := syncRepo(repo); err != nil {
+						log.WithError(err).Warn("Couldn't sync automatically")
+					}
+				}
+			}
+		} else {
+			log.Info("No sync cycle")
+		}
+	}(gitRepo)
+
 	// HTTP serving
 	http.HandleFunc("/"+viper.GetString("host.hook"), hookHandler)
+	http.HandleFunc("/sync", syncHandler)
 	http.HandleFunc("/status", statusHandler)
 	log.Fatal(http.ListenAndServe(viper.GetString("host.listen")+":"+viper.GetString("host.port"), nil))
 }
@@ -56,6 +74,7 @@ func setConfig(path string) {
 	viper.SetDefault("repo.url", "https://github.com/0rax/fishline.git")
 	viper.SetDefault("repo.path", "/opt/git2etcd/repo")
 	viper.SetDefault("repo.branch", "master")
+	viper.SetDefault("repo.synccycle", 3600)
 
 	viper.SetDefault("etcd.hosts", []string{"http://127.0.0.1:2379"})
 
@@ -87,6 +106,12 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil && err == etcd.ErrClusterUnavailable {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+}
+
+func syncHandler(w http.ResponseWriter, r *http.Request) {
+	if err := syncRepo(gitRepo); err != nil {
+		http.Error(w, "Couldn't sync repo: "+err.Error(), http.StatusInternalServerError)
 	}
 }
 
