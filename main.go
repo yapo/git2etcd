@@ -43,14 +43,18 @@ func main() {
 	}
 
 	go func(repo *git.Repository) {
-		syncCycle := time.Duration(viper.GetInt("repo.synccycle"))
+		syncCycle := time.Duration(viper.GetInt("repo.synccycle")) * time.Second
 		if syncCycle > 0 {
 			for {
 				select {
-				case <-time.After(time.Second * syncCycle):
-					syncRepo(repo)
+				case <-time.After(syncCycle):
+					if err := syncRepo(repo); err != nil {
+						log.WithError(err).Warn("Couldn't sync automatically")
+					}
 				}
 			}
+		} else {
+			log.Info("No sync cycle")
 		}
 	}(gitRepo)
 
