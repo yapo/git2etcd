@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+  <title>Starter Template - Materialize</title>
+
+  <!-- CSS  -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.5/css/materialize.min.css" media="screen,projection"/>
+  <link href="css/style.css" type="text/css" rel="stylesheet" media="screen,projection"/>
+</head>
+<body>
+  <nav class="blue darken-4" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" href="#" class="brand-logo">Git2Etcd</a>
+      <ul class="right hide-on-med-and-down">
+        <li><a href="#installation">Installation</a></li>
+        <li><a href="#configuration">Configuration</a></li>
+        <li><a href="#contribute">Contribute</a></li>
+      </ul>
+
+      <ul id="nav-mobile" class="side-nav">
+        <li><a href="#installation">Installation</a></li>
+        <li><a href="#configuration">Configuration</a></li>
+        <li><a href="#contribute">Contribute</a></li>
+      </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+  </nav>
+  <div class="section no-pad-bot" id="index-banner">
+    <div class="container">
+      
+      <br><br>
+      <h1 class="header center blue-text text-darken-4">Git2Etcd</h1>
+      <div class="row center">
+        <h5 class="header col s12 light">Mirror the contents of a git repository into your etcd key-value store.</h5>
+      </div>
+      <div class="row center">
+        <a href="#installation" id="download-button" class="btn-large waves-effect waves-light blue darken-4">Get Started</a>
+      </div>
+      <br><br>
+
+    </div>
+  </div>
+
+
+  <div class="container">
+    <div class="section">
+
+      <!--   Icon Section   -->
+      <div class="row">
+        <div class="col s12 m4">
+          <div class="icon-block">
+            <h2 class="center blue-text text-darken-4"><i class="material-icons">autorenew</i></h2>
+            <h5 class="center">Keep in sync</h5>
+
+            <p class="light">Always keep your Git repository in sync with your etcd key-value store with auto-sync and push Webhooks.</p>
+          </div>
+        </div>
+
+        <div class="col s12 m4">
+          <div class="icon-block">
+            <h2 class="center blue-text text-darken-4"><i class="material-icons">search</i></h2>
+            <h5 class="center">Never miss a change</h5>
+
+            <p class="light">Whether someone creates, edits or deletes a key of your KV store, you will always be able to know who and what with your Git history.</p>
+          </div>
+        </div>
+
+        <div class="col s12 m4">
+          <div class="icon-block">
+            <h2 class="center blue-text text-darken-4"><i class="material-icons">fingerprint</i></h2>
+            <h5 class="center">Git based permissions</h5>
+
+            <p class="light">If you don't want to deal with ACL on your etcd side, simply keep your permissions on your Git repository and only allow people to create Pull Requests that only you can merge.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <br><br>
+
+    <div class="divider"></div>
+    <div class="section" id="installation">
+      <h3 class="header center">Installation</h3>
+      <br><br>
+      <div class="row">
+        <div class="col s12 m6 l6">
+          <p>First, install <a href="https://libgit2.github.com/">libgit2</a>, then :</p><br>
+          <code>go get github.com/blippar/git2etcd</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section" id="configuration">
+      <h3 class="header center">Configuration</h3>
+      <br><br>
+      <table class="responsive-table striped">
+        <thead>
+          <tr><th>Key</th><th>Description</th><th>Default</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>host.listen</code></td><td>Host to listen to</td><td><code>""</code></td></tr>
+          <tr><td><code>host.port</code></td><td>Port to listen to</td><td><code>"4242"</code></td></tr>
+          <tr><td><code>host.hook</code></td><td>Name of the Webhook endpoint</td><td><code>"hook"</code></td></tr>
+          <tr><td><code>repo.url</code></td><td>URL of the repo to sync</td><td><code>"https://github.com/0rax/fishline.git"</code></td></tr>
+          <tr><td><code>repo.path</code></td><td>Path where to clone the repo</td><td><code>"/opt/git2etcd/repo"</code></td></tr>
+          <tr><td><code>repo.synccycle</code></td><td>Number of seconds between 2 automatic syncs (if 0, never syncs)</td><td><code>3600</code></td></tr>
+          <tr><td><code>etcd.hosts</code></td><td>List of etcd hosts</td><td><code>["http://127.0.0.1:2379"]</code></td></tr>
+          <tr><td><code>auth.type</code></td><td>Type of authentication for Git</td><td><code>"ssh"</code></td></tr>
+          <tr><td><code>auth.ssh.key</code></td><td>Path to the SSH private key (if ssh auth type)</td><td><code>"~/.ssh/id_rsa"</code></td></tr>
+          <tr><td><code>auth.ssh.public</code></td><td>Path to the SSH public key (if ssh auth type)</td><td><code>"~/.ssh/id_rsa.pub"</code></td></tr>
+          <tr><td><code>auth.http.username</code></td><td>Username (if HTTP auth type)</td><td><code>""</code></td></tr>
+          <tr><td><code>auth.http.password</code></td><td>Password (if HTTP auth type)</td><td><code>""</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section" id="contribute">
+      <h3 class="header center">Contribute</h3>
+      <div class="row">
+        <br><br>
+        <div class="col l4 offset-l4 m4 offset-m4 s8 offset-s2 center">
+          <a class="github-button" href="https://github.com/blippar/git2etcd" data-icon="octicon-star" data-style="mega" data-count-href="/blippar/git2etcd/stargazers" data-count-api="/repos/blippar/git2etcd#stargazers_count" data-count-aria-label="# stargazers on GitHub" aria-label="Star blippar/git2etcd on GitHub">Star</a>
+          <a class="github-button" href="https://github.com/blippar/git2etcd/fork" data-icon="octicon-repo-forked" data-style="mega" data-count-href="/blippar/git2etcd/network" data-count-api="/repos/blippar/git2etcd#forks_count" data-count-aria-label="# forks on GitHub" aria-label="Fork blippar/git2etcd on GitHub">Fork</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="page-footer blue darken-4">
+    <div class="container">
+      <div class="row">
+        <div class="col l6 s12">
+          <h5 class="white-text">Company Bio</h5>
+          <p class="grey-text text-lighten-4"><a href="https://blippar.com">Blippar</a> is a visual discovery app, using augmented reality and machine learning to bring the physical world to life through smartphones and wearables. Once the Blippar app is downloaded, people can blipp ("scan") objects they’re curious about and unlock content.</p>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+      <div class="container">
+      Made by <a class="orange-text text-lighten-3" href="http://materializecss.com">Materialize</a>
+      </div>
+    </div>
+  </footer>
+
+
+  <!--  Scripts-->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.5/js/materialize.min.js"></script>
+  <!-- Place this tag right after the last button or just before your close body tag. -->
+  <script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
+  </body>
+</html>
