@@ -6,9 +6,13 @@ set -e
 export GOPATH=/tmp/go
 export PATH=${PATH}:${GOPATH}/bin
 export BUILDPATH=${GOPATH}/src/github.com/blippar/git2etcd
+export PKG_CONFIG_PATH="/usr/lib/pkgconfig/:/usr/local/lib/pkgconfig/"
 
 # Install build deps
-apk --no-cache --no-progress add go gcc musl-dev libgit2-dev@testing
+apk --no-cache --no-progress --virtual build-deps add go gcc musl-dev make cmake openssl-dev libssh2-dev
+
+# Install libgit2
+./docker/install-libgit2.sh
 
 # Init go environment to build git2etcd
 mkdir -p $(dirname ${BUILDPATH})
@@ -21,4 +25,4 @@ go build
 rm -r ${GOPATH}
 
 # Remove build deps
-apk --no-cache --no-progress del go gcc musl-dev libgit2-dev
+apk --no-cache --no-progress del build-deps

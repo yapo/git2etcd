@@ -1,8 +1,9 @@
 build:
   image: golang:$$GO_VERSION
   commands:
-   - echo "@testing http://dl-4.alpinelinux.org/alpine/edge/testing" | tee -a /etc/apk/repositories
-   - apk --no-cache --quiet add libgit2-dev@testing curl git cvs gcc musl-dev
+   - apk --no-cache --quiet add curl git cvs gcc musl-dev make cmake libssh2-dev openssl-dev
+   - ./docker/install-libgit2.sh
+   - export PKG_CONFIG_PATH="/usr/lib/pkgconfig/:/usr/local/lib/pkgconfig/"
    - go get
    - go build
    - go test

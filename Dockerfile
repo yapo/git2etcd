@@ -6,8 +6,7 @@ ADD https://github.com/tianon/gosu/releases/download/1.7/gosu-amd64 /usr/local/s
 
 # Install runtime dependencies & create runtime user
 RUN chmod +x /usr/local/sbin/gosu \
- && echo "@testing http://dl-4.alpinelinux.org/alpine/edge/testing" | tee -a /etc/apk/repositories \
- && apk --no-cache --no-progress add ca-certificates git libgit2@testing \
+ && apk --no-cache --no-progress add ca-certificates git libssh2 openssl \
  && adduser -D app -h /data -s /bin/sh
 
 # Copy source code to the container & build it
