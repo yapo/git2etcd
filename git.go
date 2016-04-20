@@ -20,9 +20,14 @@ func openOrCloneRepo() error {
 				CertificateCheckCallback: certificateCheckCallback,
 			},
 		}
-		if viper.IsSet("repo.branch") {
-			cloneOptions.CheckoutBranch = viper.GetString("repo.branch")
+		if viper.GetString("repo.branch") == "" {
+			// Default value is not correctly assigned to repo.branch when using json config, forcing it here
+			viper.Set("repo.branch", "master")
 		}
+		cloneOptions.CheckoutBranch = viper.GetString("repo.branch")
+		log.Info("Cloning repo ", viper.GetString("repo.url"),
+			" on branch ", viper.GetString("repo.branch"),
+			" (in ", viper.GetString("repo.path"), ")")
 		gitRepo, err = git.Clone(viper.GetString("repo.url"), viper.GetString("repo.path"), cloneOptions)
 		if err != nil {
 			return err

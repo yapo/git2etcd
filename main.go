@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -159,8 +158,8 @@ func treatPushEvent(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Println(*event.Head)
-	oid, _ := git.NewOid(*event.Head)
+	log.Info("Repository head is now ", *event.After)
+	oid, _ := git.NewOid(*event.After)
 	commit, err := gitRepo.LookupCommit(oid)
 	if err != nil {
 		log.WithError(err).Error("Couldn't get HEAD's commit")

@@ -23,6 +23,7 @@ Key | Description | Default
 `host.port` | Port to listen to | `"4242"`
 `host.hook` | Name of the Webhook endpoint | `"hook"`
 `repo.url` | URL of the repo to sync | `"https://github.com/0rax/fishline.git"`
+`repo.branch` | Branch of the repo to sync | `"master"`
 `repo.path` | Path where to clone the repo | `"/opt/git2etcd/repo"`
 `repo.synccycle` | Number of seconds between 2 automatic syncs (if 0, never syncs) | `3600`
 `etcd.hosts` | List of etcd hosts | `["http://127.0.0.1:2379"]`
@@ -44,6 +45,7 @@ You can use a JSON config file that you would put either in current folder or in
   },
   "repo": {
     "url": "https://github.com/0rax/fishline.git",
+    "branch": "master",
     "path": "/opt/git2etcd/repo"
   },
   "etcd": {
