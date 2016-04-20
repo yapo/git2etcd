@@ -12,4 +12,3 @@ matrix:
   GO_VERSION:
     - 1.6-alpine
     - 1.5-alpine
-    - 1.4-alpine
