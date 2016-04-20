@@ -25,7 +25,9 @@ func openOrCloneRepo() error {
 			viper.Set("repo.branch", "master")
 		}
 		cloneOptions.CheckoutBranch = viper.GetString("repo.branch")
-		log.Info("Cloning repo: ", viper.GetString("repo.path"), " on branch ", viper.GetString("repo.branch"))
+		log.Info("Cloning repo ", viper.GetString("repo.url"),
+			" on branch ", viper.GetString("repo.branch"),
+			" (in ", viper.GetString("repo.path"), ")")
 		gitRepo, err = git.Clone(viper.GetString("repo.url"), viper.GetString("repo.path"), cloneOptions)
 		if err != nil {
 			return err
