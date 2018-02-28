@@ -2,7 +2,6 @@ build:
   image: golang:$$GO_VERSION
   commands:
    - apk --no-cache --quiet add curl git cvs gcc musl-dev make cmake libssh2-dev openssl-dev
-   - ./docker/install-libgit2.sh
    - export PKG_CONFIG_PATH="/usr/lib/pkgconfig/:/usr/local/lib/pkgconfig/"
    - go get
    - go build

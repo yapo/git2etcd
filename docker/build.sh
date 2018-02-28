@@ -11,9 +11,6 @@ export PKG_CONFIG_PATH="/usr/lib/pkgconfig/:/usr/local/lib/pkgconfig/"
 # Install build deps
 apk --no-cache --no-progress --virtual build-deps add go gcc musl-dev make cmake openssl-dev libssh2-dev
 
-# Install libgit2
-./docker/install-libgit2.sh
-
 # Init go environment to build git2etcd
 mkdir -p $(dirname ${BUILDPATH})
 ln -s /app ${BUILDPATH}

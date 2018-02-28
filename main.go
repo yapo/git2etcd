@@ -14,7 +14,9 @@ import (
 	"github.com/google/go-github/github"
 	"github.com/spf13/viper"
 	"golang.org/x/net/context"
-	"gopkg.in/libgit2/git2go.v23"
+	"gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing"
+	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
 const (
@@ -79,7 +81,6 @@ func setConfig(path string) {
 
 	viper.SetDefault("auth.type", "ssh")
 	viper.SetDefault("auth.ssh.key", "~/.ssh/id_rsa")
-	viper.SetDefault("auth.ssh.public", "~/.ssh/id_rsa.pub")
 
 	// Getting config from file
 	viper.SetConfigName("git2etcd")
@@ -152,15 +153,19 @@ func treatPushEvent(w http.ResponseWriter, r *http.Request) {
 			removed[cr] = true
 		}
 	}
-	err = gitRepo.CheckoutHead(nil)
+	wt, err := gitRepo.Worktree()
 	if err != nil {
-		log.WithError(err).Error("Couldn't checkout repo's HEAD")
+		log.WithError(err).Error("Couldn't get repo's WorkTree")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if err = wt.Pull(nil); err != nil {
+		log.WithError(err).Error("Couldn't pull repo's HEAD")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	log.Info("Repository head is now ", *event.After)
-	oid, _ := git.NewOid(*event.After)
-	commit, err := gitRepo.LookupCommit(oid)
+	commit, err := gitRepo.CommitObject(plumbing.NewHash(*event.After))
 	if err != nil {
 		log.WithError(err).Error("Couldn't get HEAD's commit")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -177,9 +182,9 @@ func treatPushEvent(w http.ResponseWriter, r *http.Request) {
 	treatRemoved(removed, tree)
 }
 
-func treatAdded(added map[string]bool, tree *git.Tree) {
+func treatAdded(added map[string]bool, tree *object.Tree) {
 	for file := range added {
-		_, err := tree.EntryByPath(file)
+		_, err := tree.File(file)
 		if err != nil {
 			log.WithError(err).Warn("Couldn't get file: ", file)
 			continue
@@ -190,9 +195,9 @@ func treatAdded(added map[string]bool, tree *git.Tree) {
 	}
 }
 
-func treatModified(modified map[string]bool, tree *git.Tree) {
+func treatModified(modified map[string]bool, tree *object.Tree) {
 	for file := range modified {
-		_, err := tree.EntryByPath(file)
+		_, err := tree.File(file)
 		if err != nil {
 			log.WithError(err).Warn("Couldn't get file: ", file)
 			continue
@@ -203,9 +208,9 @@ func treatModified(modified map[string]bool, tree *git.Tree) {
 	}
 }
 
-func treatRemoved(removed map[string]bool, tree *git.Tree) {
+func treatRemoved(removed map[string]bool, tree *object.Tree) {
 	for file := range removed {
-		_, err := tree.EntryByPath(file)
+		_, err := tree.File(file)
 		if err != nil {
 			log.WithError(err).Warn("Couldn't get file: ", file)
 			continue

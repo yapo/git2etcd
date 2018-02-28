@@ -2,33 +2,65 @@ package main
 
 import (
 	"errors"
+	"io/ioutil"
+	"os"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/viper"
-	"gopkg.in/libgit2/git2go.v23"
+	"golang.org/x/crypto/ssh"
+	"gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing"
+	gitobj "gopkg.in/src-d/go-git.v4/plumbing/object"
+	githttp "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
+	gitssh "gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
 )
 
 func openOrCloneRepo() error {
 	var err error
-	gitRepo, err = git.OpenRepository(viper.GetString("repo.path"))
+	gitRepo, err = git.PlainOpen(viper.GetString("repo.path"))
 	if err != nil || gitRepo == nil {
 		log.WithError(err).Warn("Couldn't find repo locally, trying to clone it")
 		cloneOptions := &git.CloneOptions{}
-		cloneOptions.FetchOptions = &git.FetchOptions{
-			RemoteCallbacks: git.RemoteCallbacks{
-				CredentialsCallback:      credentialsCallback,
-				CertificateCheckCallback: certificateCheckCallback,
-			},
+		cloneOptions.URL = viper.GetString("repo.url")
+		if viper.GetString("auth.type") == "ssh" {
+			var signer ssh.Signer
+			sshFile, err := os.Open(viper.GetString("auth.ssh.key"))
+			if err != nil {
+				return errors.New("Couldn't open SSH key: " + err.Error())
+			}
+			sshB, err := ioutil.ReadAll(sshFile)
+			if err != nil {
+				return errors.New("Couldn't read SSH key: " + err.Error())
+			}
+			if viper.GetString("auth.ssh.passphrase") != "" {
+				signer, err = ssh.ParsePrivateKeyWithPassphrase(sshB, []byte(viper.GetString("auth.ssh.passphrase")))
+			} else {
+				signer, err = ssh.ParsePrivateKey(sshB)
+			}
+			if err != nil {
+				return errors.New("Couldn't parse SSH key: " + err.Error())
+			}
+			sshAuth := &gitssh.PublicKeys{User: "git", Signer: signer}
+			cloneOptions.Auth = sshAuth
+		} else {
+			httpAuth := &githttp.BasicAuth{
+				Username: viper.GetString("auth.http.username"),
+				Password: viper.GetString("auth.http.password"),
+			}
+			cloneOptions.Auth = httpAuth
 		}
 		if viper.GetString("repo.branch") == "" {
 			// Default value is not correctly assigned to repo.branch when using json config, forcing it here
 			viper.Set("repo.branch", "master")
 		}
-		cloneOptions.CheckoutBranch = viper.GetString("repo.branch")
-		log.Info("Cloning repo ", viper.GetString("repo.url"),
-			" on branch ", viper.GetString("repo.branch"),
-			" (in ", viper.GetString("repo.path"), ")")
-		gitRepo, err = git.Clone(viper.GetString("repo.url"), viper.GetString("repo.path"), cloneOptions)
+		cloneOptions.SingleBranch = true
+		cloneOptions.ReferenceName = plumbing.ReferenceName("refs/heads/" + viper.GetString("repo.branch"))
+		log.WithFields(log.Fields{
+			"url":    viper.GetString("repo.url"),
+			"branch": viper.GetString("repo.branch"),
+			"path":   viper.GetString("repo.path"),
+		}).Info("Cloning repo")
+		gitRepo, err = git.PlainClone(viper.GetString("repo.path"), false, cloneOptions)
 		if err != nil {
 			return err
 		}
@@ -40,79 +72,40 @@ func openOrCloneRepo() error {
 }
 
 func syncRepo(repo *git.Repository) error {
-	remote, err := repo.Remotes.Lookup("origin")
+	wt, err := repo.Worktree()
 	if err != nil {
-		return errors.New("Couldn't lookup remote: " + err.Error())
+		return errors.New("Couldn't get WorkTree: " + err.Error())
 	}
-	if err := remote.Fetch([]string{}, &git.FetchOptions{
-		RemoteCallbacks: git.RemoteCallbacks{
-			CredentialsCallback:      credentialsCallback,
-			CertificateCheckCallback: certificateCheckCallback,
-		},
-	}, ""); err != nil {
-		return errors.New("Couldn't fetch remote: " + err.Error())
-	}
-	// Merge
-	remoteRef, err := repo.References.Lookup("refs/remotes/origin/" + viper.GetString("repo.branch"))
-	if err != nil {
-		return errors.New("Couldn't lookup ref: " + err.Error())
-	}
-	mergeRemoteHead, err := repo.AnnotatedCommitFromRef(remoteRef)
-	if err != nil {
-		return errors.New("Couldn't get commit ref: " + err.Error())
-	}
-
-	mergeHeads := make([]*git.AnnotatedCommit, 1)
-	mergeHeads[0] = mergeRemoteHead
-	if err = repo.Merge(mergeHeads, nil, nil); err != nil {
-		return errors.New("Couldn't merge: " + err.Error())
-	}
-	if err := repo.CheckoutHead(nil); err != nil {
-		return errors.New("Couldn't checkout head: " + err.Error())
+	if err := wt.Pull(&git.PullOptions{}); err != nil && err != git.NoErrAlreadyUpToDate {
+		return errors.New("Couldn't pull: " + err.Error())
 	}
 	head, err := repo.Head()
 	if err != nil {
 		return errors.New("Couldn't checkout head: " + err.Error())
 	}
-	commit, err := repo.LookupCommit(head.Target())
+	commit, err := repo.CommitObject(head.Hash())
 	if err != nil {
-		return errors.New("Couldn't lookup commit: " + err.Error())
+		return errors.New("Couldn't get commit: " + err.Error())
 	}
 	tree, err := commit.Tree()
 	if err != nil {
 		return errors.New("Couldn't get commit tree: " + err.Error())
 	}
-	tree.Walk(walkCallback)
+	err = tree.Files().ForEach(func(f *gitobj.File) error {
+		if !etcdExists(f.Name) {
+			if err := etcdCreate(f.Name); err != nil {
+				log.WithError(err).WithField("name", f.Name).Warn("Couldn't create key")
+			}
+		} else {
+			if err := etcdSet(f.Name); err != nil {
+				log.WithError(err).WithField("name", f.Name).Warn("Couldn't set key")
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return errors.New("Couldn't walk in files: " + err.Error())
+	}
 	log.Info("Repo synced")
 	return nil
-}
-
-func walkCallback(name string, treeEntry *git.TreeEntry) int {
-	if treeEntry.Type == git.ObjectTree {
-		return 0
-	}
-	name += treeEntry.Name
-	if !etcdExists(name) {
-		if err := etcdCreate(name); err != nil {
-			log.WithError(err).Warn("Couldn't create key")
-		}
-	} else {
-		if err := etcdSet(name); err != nil {
-			log.WithError(err).Warn("Couldn't set key")
-		}
-	}
-	return 0
-}
-
-func credentialsCallback(url string, username string, allowedTypes git.CredType) (git.ErrorCode, *git.Cred) {
-	if viper.GetString("auth.type") == "ssh" {
-		ret, cred := git.NewCredSshKey("git", viper.GetString("auth.ssh.public"), viper.GetString("auth.ssh.key"), viper.GetString("auth.ssh.passphrase"))
-		return git.ErrorCode(ret), &cred
-	}
-	ret, cred := git.NewCredUserpassPlaintext(viper.GetString("auth.http.username"), viper.GetString("auth.http.password"))
-	return git.ErrorCode(ret), &cred
-}
-
-func certificateCheckCallback(cert *git.Certificate, valid bool, hostname string) git.ErrorCode {
-	return 0
 }
