@@ -44,7 +44,7 @@ You can use a JSON config file that you would put either in current folder or in
     "hook": "hook"
   },
   "repo": {
-    "url": "https://github.com/0rax/fishline.git",
+    "url": "https://github.com/blippar/git2etcd.git",
     "branch": "master",
     "path": "/opt/git2etcd/repo"
   },
