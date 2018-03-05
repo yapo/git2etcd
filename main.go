@@ -24,7 +24,7 @@ const (
 )
 
 var (
-	flagConfigPath = flag.String("config", "", "Path to look for a config file. (directory)")
+	flagConfigPath = flag.String("conf_dir", "", "Path to look for a config file. (directory)")
 	gitRepo        *git.Repository
 	etcdClient     etcd.KeysAPI
 )
@@ -67,23 +67,21 @@ func main() {
 }
 
 func setConfig(path string) {
+
 	// Default values
 	viper.SetDefault("host.listen", "")
 	viper.SetDefault("host.port", "4242")
 	viper.SetDefault("host.hook", "hook")
 
-	viper.SetDefault("repo.url", "https://github.com/0rax/fishline.git")
-	viper.SetDefault("repo.path", "/opt/git2etcd/repo")
+	viper.SetDefault("repo.path", "data/")
+	viper.SetDefault("repo.url", "https://github.com/blippar/git2etcd.git")
 	viper.SetDefault("repo.branch", "master")
 	viper.SetDefault("repo.synccycle", 3600)
 
 	viper.SetDefault("etcd.hosts", []string{"http://127.0.0.1:2379"})
 
-	viper.SetDefault("auth.type", "ssh")
-	viper.SetDefault("auth.ssh.key", "~/.ssh/id_rsa")
-
 	// Getting config from file
-	viper.SetConfigName("git2etcd")
+	viper.SetConfigName("config")
 	viper.AddConfigPath("/etc/git2etcd/")
 	viper.AddConfigPath("$HOME/.git2etcd")
 	viper.AddConfigPath(".")
@@ -133,7 +131,7 @@ func treatPushEvent(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if err := json.Unmarshal(body, &event); err != nil {
+	if err = json.Unmarshal(body, &event); err != nil {
 		log.WithError(err).Error("Couldn't Unmarshal json payload")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
