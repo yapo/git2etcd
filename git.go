@@ -11,6 +11,7 @@ import (
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	gitobj "gopkg.in/src-d/go-git.v4/plumbing/object"
+	gittransport "gopkg.in/src-d/go-git.v4/plumbing/transport"
 	githttp "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
 	gitssh "gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
 )
@@ -22,32 +23,9 @@ func openOrCloneRepo() error {
 		log.WithError(err).Warn("Couldn't find repo locally, trying to clone it")
 		cloneOptions := &git.CloneOptions{}
 		cloneOptions.URL = viper.GetString("repo.url")
-		if viper.GetString("auth.type") == "ssh" {
-			var signer ssh.Signer
-			sshFile, err := os.Open(viper.GetString("auth.ssh.key"))
-			if err != nil {
-				return errors.New("Couldn't open SSH key: " + err.Error())
-			}
-			sshB, err := ioutil.ReadAll(sshFile)
-			if err != nil {
-				return errors.New("Couldn't read SSH key: " + err.Error())
-			}
-			if viper.GetString("auth.ssh.passphrase") != "" {
-				signer, err = ssh.ParsePrivateKeyWithPassphrase(sshB, []byte(viper.GetString("auth.ssh.passphrase")))
-			} else {
-				signer, err = ssh.ParsePrivateKey(sshB)
-			}
-			if err != nil {
-				return errors.New("Couldn't parse SSH key: " + err.Error())
-			}
-			sshAuth := &gitssh.PublicKeys{User: "git", Signer: signer}
-			cloneOptions.Auth = sshAuth
-		} else {
-			httpAuth := &githttp.BasicAuth{
-				Username: viper.GetString("auth.http.username"),
-				Password: viper.GetString("auth.http.password"),
-			}
-			cloneOptions.Auth = httpAuth
+		cloneOptions.Auth, err = getGitAuth()
+		if err != nil {
+			return err
 		}
 		if viper.GetString("repo.branch") == "" {
 			// Default value is not correctly assigned to repo.branch when using json config, forcing it here
@@ -76,7 +54,12 @@ func syncRepo(repo *git.Repository) error {
 	if err != nil {
 		return errors.New("Couldn't get WorkTree: " + err.Error())
 	}
-	if err := wt.Pull(&git.PullOptions{}); err != nil && err != git.NoErrAlreadyUpToDate {
+	po := &git.PullOptions{}
+	po.Auth, err = getGitAuth()
+	if err != nil {
+		return err
+	}
+	if err := wt.Pull(po); err != nil && err != git.NoErrAlreadyUpToDate {
 		return errors.New("Couldn't pull: " + err.Error())
 	}
 	head, err := repo.Head()
@@ -108,4 +91,33 @@ func syncRepo(repo *git.Repository) error {
 	}
 	log.Info("Repo synced")
 	return nil
+}
+
+func getGitAuth() (gittransport.AuthMethod, error) {
+	if viper.GetString("auth.type") == "ssh" {
+		var signer ssh.Signer
+		sshFile, err := os.Open(viper.GetString("auth.ssh.key"))
+		if err != nil {
+			return nil, errors.New("Couldn't open SSH key: " + err.Error())
+		}
+		sshB, err := ioutil.ReadAll(sshFile)
+		if err != nil {
+			return nil, errors.New("Couldn't read SSH key: " + err.Error())
+		}
+		if viper.GetString("auth.ssh.passphrase") != "" {
+			signer, err = ssh.ParsePrivateKeyWithPassphrase(sshB, []byte(viper.GetString("auth.ssh.passphrase")))
+		} else {
+			signer, err = ssh.ParsePrivateKey(sshB)
+		}
+		if err != nil {
+			return nil, errors.New("Couldn't parse SSH key: " + err.Error())
+		}
+		sshAuth := &gitssh.PublicKeys{User: "git", Signer: signer}
+		return sshAuth, nil
+	}
+	httpAuth := &githttp.BasicAuth{
+		Username: viper.GetString("auth.http.username"),
+		Password: viper.GetString("auth.http.password"),
+	}
+	return httpAuth, nil
 }
