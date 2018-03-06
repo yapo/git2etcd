@@ -1,12 +1,18 @@
 # git2etcd
-[![GoDoc](https://godoc.org/github.com/blippar/git2etcd?status.svg)](http://godoc.org/github.com/blippar/git2etcd) [![Build Status](https://ci.userctl.xyz/api/badges/blippar/git2etcd/status.svg)](https://ci.userctl.xyz/blippar/git2etcd)
+[![Go Report Card](https://goreportcard.com/badge/github.com/blippar/git2etcd)](https://goreportcard.com/report/github.com/blippar/git2etcd) [![GoDoc](https://godoc.org/github.com/blippar/git2etcd?status.svg)](http://godoc.org/github.com/blippar/git2etcd) [![GitHub release](https://img.shields.io/github/release/blippar/git2etcd.svg)](https://github.com/blippar/git2etcd/releases/latest) [![LICENSE](https://img.shields.io/github/license/blippar/git2etcd.svg)](https://github.com/blippar/git2etcd/blob/master/LICENSE)
 
 
 Simple binary to sync a Git repository with an etcd config. Built and tested with Go 1.4+
 
 ## Installing
 
-First, install libgit2, then :
+### Docker
+
+```
+docker pull blippar/git2etcd
+```
+
+### Manually
 
 ```
 go get github.com/blippar/git2etcd
