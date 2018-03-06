@@ -54,7 +54,9 @@ func syncRepo(repo *git.Repository) error {
 	if err != nil {
 		return errors.New("Couldn't get WorkTree: " + err.Error())
 	}
-	po := &git.PullOptions{}
+	po := &git.PullOptions{
+		ReferenceName: plumbing.ReferenceName("refs/heads/" + viper.GetString("repo.branch")),
+	}
 	po.Auth, err = getGitAuth()
 	if err != nil {
 		return err
