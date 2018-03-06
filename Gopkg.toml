@@ -1,0 +1,34 @@
+# https://golang.github.io/dep/docs/Gopkg.toml.html
+
+[prune]
+  unused-packages = true
+  non-go = true
+  go-tests = true
+
+[[constraint]]
+  name = "github.com/Sirupsen/logrus"
+  version = "1.0.4"
+
+[[constraint]]
+  name = "github.com/coreos/etcd"
+  version = "3.3.1"
+
+[[constraint]]
+  name = "github.com/google/go-github"
+  version = "15.0.0"
+
+[[constraint]]
+  name = "github.com/spf13/viper"
+  version = "1.0.0"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/crypto"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/net"
+
+[[constraint]]
+  name = "gopkg.in/src-d/go-git.v4"
+  version = "4.1.1"

@@ -1,0 +1,19 @@
+{
+  "host": {
+    "listen": "",
+    "port": "4242",
+    "hook": "hook"
+  },
+  "repo": {
+    "url": "",
+    "branch": "master",
+    "path": "/opt/git2etcd/data"
+  },
+  "etcd": {
+    "hosts": [
+      "http://etcd:2379"
+    ]
+  },
+  "auth": {
+  }
+}

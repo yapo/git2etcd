@@ -14,7 +14,9 @@ import (
 	"github.com/google/go-github/github"
 	"github.com/spf13/viper"
 	"golang.org/x/net/context"
-	"gopkg.in/libgit2/git2go.v23"
+	"gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing"
+	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
 const (
@@ -22,7 +24,7 @@ const (
 )
 
 var (
-	flagConfigPath = flag.String("config", "", "Path to look for a config file. (directory)")
+	flagConfigPath = flag.String("conf_dir", "", "Path to look for a config file. (directory)")
 	gitRepo        *git.Repository
 	etcdClient     etcd.KeysAPI
 )
@@ -65,24 +67,21 @@ func main() {
 }
 
 func setConfig(path string) {
+
 	// Default values
 	viper.SetDefault("host.listen", "")
 	viper.SetDefault("host.port", "4242")
 	viper.SetDefault("host.hook", "hook")
 
-	viper.SetDefault("repo.url", "https://github.com/0rax/fishline.git")
-	viper.SetDefault("repo.path", "/opt/git2etcd/repo")
+	viper.SetDefault("repo.path", "data/")
+	viper.SetDefault("repo.url", "https://github.com/blippar/git2etcd.git")
 	viper.SetDefault("repo.branch", "master")
 	viper.SetDefault("repo.synccycle", 3600)
 
 	viper.SetDefault("etcd.hosts", []string{"http://127.0.0.1:2379"})
 
-	viper.SetDefault("auth.type", "ssh")
-	viper.SetDefault("auth.ssh.key", "~/.ssh/id_rsa")
-	viper.SetDefault("auth.ssh.public", "~/.ssh/id_rsa.pub")
-
 	// Getting config from file
-	viper.SetConfigName("git2etcd")
+	viper.SetConfigName("config")
 	viper.AddConfigPath("/etc/git2etcd/")
 	viper.AddConfigPath("$HOME/.git2etcd")
 	viper.AddConfigPath(".")
@@ -132,7 +131,7 @@ func treatPushEvent(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if err := json.Unmarshal(body, &event); err != nil {
+	if err = json.Unmarshal(body, &event); err != nil {
 		log.WithError(err).Error("Couldn't Unmarshal json payload")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -152,15 +151,19 @@ func treatPushEvent(w http.ResponseWriter, r *http.Request) {
 			removed[cr] = true
 		}
 	}
-	err = gitRepo.CheckoutHead(nil)
+	wt, err := gitRepo.Worktree()
 	if err != nil {
-		log.WithError(err).Error("Couldn't checkout repo's HEAD")
+		log.WithError(err).Error("Couldn't get repo's WorkTree")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if err = wt.Pull(nil); err != nil {
+		log.WithError(err).Error("Couldn't pull repo's HEAD")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	log.Info("Repository head is now ", *event.After)
-	oid, _ := git.NewOid(*event.After)
-	commit, err := gitRepo.LookupCommit(oid)
+	commit, err := gitRepo.CommitObject(plumbing.NewHash(*event.After))
 	if err != nil {
 		log.WithError(err).Error("Couldn't get HEAD's commit")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -177,9 +180,9 @@ func treatPushEvent(w http.ResponseWriter, r *http.Request) {
 	treatRemoved(removed, tree)
 }
 
-func treatAdded(added map[string]bool, tree *git.Tree) {
+func treatAdded(added map[string]bool, tree *object.Tree) {
 	for file := range added {
-		_, err := tree.EntryByPath(file)
+		_, err := tree.File(file)
 		if err != nil {
 			log.WithError(err).Warn("Couldn't get file: ", file)
 			continue
@@ -190,9 +193,9 @@ func treatAdded(added map[string]bool, tree *git.Tree) {
 	}
 }
 
-func treatModified(modified map[string]bool, tree *git.Tree) {
+func treatModified(modified map[string]bool, tree *object.Tree) {
 	for file := range modified {
-		_, err := tree.EntryByPath(file)
+		_, err := tree.File(file)
 		if err != nil {
 			log.WithError(err).Warn("Couldn't get file: ", file)
 			continue
@@ -203,9 +206,9 @@ func treatModified(modified map[string]bool, tree *git.Tree) {
 	}
 }
 
-func treatRemoved(removed map[string]bool, tree *git.Tree) {
+func treatRemoved(removed map[string]bool, tree *object.Tree) {
 	for file := range removed {
-		_, err := tree.EntryByPath(file)
+		_, err := tree.File(file)
 		if err != nil {
 			log.WithError(err).Warn("Couldn't get file: ", file)
 			continue
