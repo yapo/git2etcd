@@ -74,7 +74,7 @@ func setConfig(path string) {
 	viper.SetDefault("host.hook", "hook")
 
 	viper.SetDefault("repo.path", "data/")
-	viper.SetDefault("repo.url", "https://github.com/blippar/git2etcd.git")
+	viper.SetDefault("repo.url", "https://github.com/djaque/git2etcd.git")
 	viper.SetDefault("repo.branch", "master")
 	viper.SetDefault("repo.synccycle", 3600)
 
