@@ -76,6 +76,7 @@ func syncRepo(repo *git.Repository) error {
 	if err != nil {
 		return errors.New("Couldn't get commit tree: " + err.Error())
 	}
+	log.Info("Pulling end, Start to write on Etcd")
 	err = tree.Files().ForEach(func(f *gitobj.File) error {
 		if !etcdExists(f.Name) {
 			if err := etcdCreate(f.Name); err != nil {

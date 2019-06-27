@@ -97,6 +97,8 @@ func setConfig(path string) {
 	viper.SetEnvPrefix("g2e")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
+
+	log.Info("Config repo: %+v", viper.GetString("repo.url"))
 }
 
 func statusHandler(w http.ResponseWriter, r *http.Request) {
