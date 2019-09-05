@@ -32,16 +32,22 @@ func openOrCloneRepo() error {
 			viper.Set("repo.branch", "master")
 		}
 		cloneOptions.SingleBranch = true
+		cloneOptions.Depth = 1
+		cloneOptions.Tags = git.NoTags
+		cloneOptions.Progress = os.Stdout
 		cloneOptions.ReferenceName = plumbing.ReferenceName("refs/heads/" + viper.GetString("repo.branch"))
 		log.WithFields(log.Fields{
 			"url":    viper.GetString("repo.url"),
 			"branch": viper.GetString("repo.branch"),
 			"path":   viper.GetString("repo.path"),
+			"depth":  cloneOptions.Depth,
 		}).Info("Cloning repo")
 		gitRepo, err = git.PlainClone(viper.GetString("repo.path"), false, cloneOptions)
+
 		if err != nil {
 			return err
 		}
+		log.Info("Clone end")
 	}
 	if err := syncRepo(gitRepo); err != nil {
 		log.WithError(err).Warn("Couldn't sync repo")
@@ -98,6 +104,7 @@ func syncRepo(repo *git.Repository) error {
 
 func getGitAuth() (gittransport.AuthMethod, error) {
 	if viper.GetString("auth.type") == "ssh" {
+		log.Info("Check with ssh key")
 		var signer ssh.Signer
 		sshFile, err := os.Open(viper.GetString("auth.ssh.key"))
 		if err != nil {
