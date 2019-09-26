@@ -2,10 +2,10 @@ FROM golang:1.10-alpine AS builder
 
 RUN apk add --no-cache make
 
-COPY .  /go/src/github.com/djaque/git2etcd
-WORKDIR /go/src/github.com/djaque/git2etcd
+COPY .  /go/src/github.com/yapo/git2etcd
+WORKDIR /go/src/github.com/yapo/git2etcd
 
-RUN cd /go/src/github.com/djaque/git2etcd \
+RUN cd /go/src/github.com/yapo/git2etcd \
  && go build -v
 
 FROM alpine:3.7 AS runtime
@@ -24,7 +24,7 @@ USER g2e
 WORKDIR /opt/git2etcd
 
 # Copy git2etcd binary to /opt/git2etcd/bin
-COPY --from=builder /go/src/github.com/djaque/git2etcd/git2etcd /opt/git2etcd/bin/git2etcd
+COPY --from=builder /go/src/github.com/yapo/git2etcd/git2etcd /opt/git2etcd/bin/git2etcd
 COPY config.example.json /opt/git2etcd/config/config.json
 ENV PATH $PATH:/opt/git2etcd/bin
 

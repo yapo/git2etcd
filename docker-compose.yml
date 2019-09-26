@@ -14,12 +14,12 @@ services:
 
   git2etcd:
     build: .
-    image: djaque/git2etcd
+    image: yapo/git2etcd
     command:
       - /opt/git2etcd/bin/git2etcd
       - -conf_dir=/opt/git2etcd/config
     environment:
-      - G2E_REPO_URL=https://github.com/djaque/example_conf.git
+      - G2E_REPO_URL=https://github.com/yapo/example_conf.git
       - G2E_ETCD_HOSTS=http://etcd:2379/
     depends_on:
       - etcd
