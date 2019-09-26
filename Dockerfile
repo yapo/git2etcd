@@ -8,7 +8,7 @@ WORKDIR /go/src/github.com/yapo/git2etcd
 RUN cd /go/src/github.com/yapo/git2etcd \
  && go build -v
 
-FROM alpine:3.7 AS runtime
+FROM alpine/git:latest AS runtime
 
 # Install tini to /usr/local/sbin
 ADD https://github.com/krallin/tini/releases/download/v0.17.0/tini-muslc-amd64 /usr/local/sbin/tini
@@ -17,7 +17,8 @@ ADD https://github.com/krallin/tini/releases/download/v0.17.0/tini-muslc-amd64 /
 RUN apk --no-cache --no-progress add ca-certificates git libssh2 openssl \
  && chmod +x /usr/local/sbin/tini && mkdir -p /opt \
  && adduser -D g2e -h /opt/git2etcd -s /bin/sh \
- && su g2e -c 'cd /opt/git2etcd; mkdir -p bin config data'
+ && su g2e -c 'cd /opt/git2etcd; mkdir -p bin config data' \
+ && apk add --update bash wget ca-certificates openssl git tar
 
 # Switch to user context
 USER g2e
