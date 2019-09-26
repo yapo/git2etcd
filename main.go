@@ -32,7 +32,6 @@ var (
 func main() {
 	flag.Parse()
 	setConfig(*flagConfigPath)
-
 	// etcd Client connection
 	if err := etcdConnect(); err != nil {
 		log.WithError(err).Fatal("Couldn't connect to etcd")
@@ -97,6 +96,9 @@ func setConfig(path string) {
 	viper.SetEnvPrefix("g2e")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
+
+	log.Info("Config repo: ", viper.GetString("repo.url"))
+	log.Info("Config auth.type: ", viper.GetString("auth.type"))
 }
 
 func statusHandler(w http.ResponseWriter, r *http.Request) {
